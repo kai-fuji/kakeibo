@@ -1,0 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  background-color: #eef7ff;
+  color: #243b53;
+  font-family: 'M PLUS Rounded 1c', -apple-system, BlinkMacSystemFont, 'Hiragino Maru Gothic ProN',
+    'Hiragino Sans', 'Noto Sans JP', sans-serif;
+}
+
+input, select, textarea {
+  font-size: 16px; /* iOSで入力時にズームしないため */
+}
+
+/* 緑のリボン見出し（ポケモンスリープのセクション見出し風） */
+.ribbon {
+  display: inline-block;
+  background: linear-gradient(90deg, #1ed760, #12b76a);
+  color: #fff;
+  font-weight: 800;
+  padding: 0.35rem 1.6rem 0.35rem 0.9rem;
+  clip-path: polygon(0 0, 100% 0, calc(100% - 14px) 100%, 0 100%);
+  border-radius: 4px 0 0 4px;
+  box-shadow: 0 2px 6px rgba(18, 183, 106, 0.35);
+}

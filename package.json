@@ -1,0 +1,1 @@
+{"dependencies":{"@libsql/client":"^0.5.6","next":"14.2.35","react":"^18.2.0","react-dom":"^18.2.0"},"description":"家族家計簿アプリ - 月次集計・現金・建て替え精算","devDependencies":{"autoprefixer":"^10.4.16","postcss":"^8.4.31","tailwindcss":"^3.3.0"},"name":"kakeibo-app","scripts":{"build":"next build","dev":"next dev","lint":"next lint","start":"next start"},"version":"1.0.0"}
