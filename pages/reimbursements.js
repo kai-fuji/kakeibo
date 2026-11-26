@@ -6,14 +6,15 @@ import EmptyState from '../components/EmptyState'
 const emptyForm = {
   date: new Date().toISOString().slice(0, 10),
   member: '',
-  direction: 'family_to_member',
+  direction: 'member_to_family',
   amount: '',
   detail: '',
 }
 
+// 基本は「個人の買い物を家族カードで支払った」ケース（プラス＝本人が家族口座へ振り込む）
 const DIRECTION_LABEL = {
-  family_to_member: '家族→本人へ返す（本人が立て替えた）',
   member_to_family: '本人→家族へ返す（家族カードで個人の支出）',
+  family_to_member: '家族→本人へ返す（本人が立て替えた）',
 }
 
 const LIST_LIMIT = 20
