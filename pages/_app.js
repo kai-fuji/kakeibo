@@ -20,7 +20,7 @@ export default function App({ Component, pageProps }) {
         <meta name="apple-mobile-web-app-title" content="家計簿" />
         <meta name="theme-color" content="#1c9dff" />
         <link rel="manifest" href="/manifest.json" />
-        <link rel="apple-touch-icon" href="/api/icon/180.png" />
+        <link rel="apple-touch-icon" href="/api/icon/180.png?v=2" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link

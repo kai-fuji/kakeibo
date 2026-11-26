@@ -1,15 +1,9 @@
 // 家計簿アプリ Service Worker
 // 方針: アプリのシェル（HTML/静的アセット）だけを軽くキャッシュする。
 // 家計データは API + Turso が正なので、/api/ のレスポンスは絶対にキャッシュしない。
-const CACHE_NAME = 'kakeibo-shell-v1'
-const PRECACHE_URLS = [
-  '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png',
-  '/icon-maskable-192.png',
-  '/icon-maskable-512.png',
-  '/icon-180.png',
-]
+const CACHE_NAME = 'kakeibo-shell-v2'
+// manifest とアイコンは先読みキャッシュしない（古いアイコンが残り続けるのを防ぐ）
+const PRECACHE_URLS = []
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -43,6 +37,8 @@ self.addEventListener('fetch', (event) => {
   if (url.origin !== self.location.origin) return
   // Service Worker 自身はキャッシュしない
   if (url.pathname === '/sw.js') return
+  // manifest は常にネットワーク（アイコン変更を即反映するため）
+  if (url.pathname === '/manifest.json') return
 
   // ページ遷移: ネットワーク優先、失敗時だけキャッシュ（オフライン時の保険）
   if (request.mode === 'navigate') {

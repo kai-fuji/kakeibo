@@ -8,6 +8,6 @@ export default function handler(req, res) {
   if (!b64) return res.status(404).send('not found')
   const buf = Buffer.from(b64, 'base64')
   res.setHeader('Content-Type', 'image/png')
-  res.setHeader('Cache-Control', 'public, max-age=31536000, immutable')
+  res.setHeader('Cache-Control', 'public, max-age=86400')
   return res.status(200).send(buf)
 }
