@@ -1,12 +1,16 @@
 // pages/settings.js - カテゴリー・メンバー管理とエクスポート
 import { useEffect, useState } from 'react'
 import Layout, { api } from '../components/Layout'
+import { CHARACTERS, CHARACTERS_BY_NAME, setCharacter, useCharacter } from '../lib/characters'
+import { CHARACTER_IMAGES } from '../lib/characters-full'
 
 const GROUP_LABEL = { variable: '変動支出', special: '特別支出', fixed: '固定支出' }
 
 const RULE_LIMIT = 15
 
 export default function SettingsPage() {
+  const char = useCharacter()
+  const [charSort, setCharSort] = useState('recommended')
   const [categories, setCategories] = useState([])
   const [members, setMembers] = useState([])
   const [newCategory, setNewCategory] = useState('')
@@ -22,6 +26,18 @@ export default function SettingsPage() {
     api('/api/store-rules').then(setRules).catch(() => {})
   }
   useEffect(load, [])
+  useEffect(() => {
+    try {
+      const v = localStorage.getItem('kakeibo-character-sort')
+      if (v === 'name' || v === 'recommended') setCharSort(v)
+    } catch { /* ignore */ }
+  }, [])
+  const changeCharSort = (v) => {
+    setCharSort(v)
+    try { localStorage.setItem('kakeibo-character-sort', v) } catch { /* ignore */ }
+  }
+  const charList = charSort === 'name' ? CHARACTERS_BY_NAME : CHARACTERS
+  const charImgSrc = (c) => (c.id === 'accountant' ? '/mickey-accountant.png' : CHARACTER_IMAGES[c.id])
 
   const changeRuleCategory = async (rule, category) => {
     await api('/api/store-rules', {
@@ -76,12 +92,40 @@ export default function SettingsPage() {
       <div className="space-y-4">
         <div className="bg-white rounded-2xl p-4 shadow-sm flex items-center gap-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/mickey-office.png" alt="ミッキー" className="w-14 h-14 rounded-full object-cover border-[3px] border-yellow-200 bg-white shadow-sm" />
+          <img src={char.src} alt={char.name} className="w-14 h-14 rounded-full object-cover border-[3px] border-yellow-200 bg-white shadow-sm" />
           <div>
-            <div className="font-extrabold">ミッキー</div>
+            <div className="font-extrabold">{char.name}</div>
             <div className="text-sm text-gray-400">設定や集計をお手伝いします</div>
           </div>
         </div>
+        <div className="bg-white rounded-2xl p-4 shadow-sm">
+          <h2 className="font-bold mb-1">キャラクター</h2>
+          <p className="text-sm text-gray-400 mb-3">アプリの中に登場するキャラクターを選べます。今は「{char.name}」です。</p>
+          <div className="flex gap-2 mb-3">
+            {[
+              { v: 'recommended', label: 'おすすめ順' },
+              { v: 'name', label: '名前順' },
+            ].map((o) => (
+              <button
+                key={o.v}
+                onClick={() => changeCharSort(o.v)}
+                className={`rounded-full px-4 py-1.5 text-sm font-bold ${charSort === o.v ? 'bg-sleep-blue text-white' : 'bg-gray-100 text-gray-500'}`}
+              >
+                {o.label}
+              </button>
+            ))}
+          </div>
+          <div className="grid grid-cols-4 gap-3">
+            {charList.map((c) => (
+              <button key={c.id} onClick={() => setCharacter(c.id, charImgSrc(c))} className="flex flex-col items-center gap-1" aria-pressed={c.id === char.id}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={charImgSrc(c)} alt={c.name} className={`w-16 h-16 rounded-full object-cover ${c.id === char.id ? 'ring-4 ring-yellow-300' : 'ring-1 ring-gray-200'}`} />
+                <span className={`w-full truncate text-center text-[10px] ${c.id === char.id ? 'font-bold text-sleep-blue' : 'text-gray-400'}`}>{c.name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="bg-white rounded-2xl p-4 shadow-sm">
           <h2 className="font-bold mb-3">メンバー（支払者・建て替え対象者）</h2>
           <div className="flex flex-wrap gap-2 mb-3">

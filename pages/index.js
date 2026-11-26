@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Layout, { api, yen, currentMonth, shiftMonth, categoryColor } from '../components/Layout'
 import EmptyState from '../components/EmptyState'
+import { useCharacter } from '../lib/characters'
 
 const GROUP_LABEL = { variable: '変動支出', special: '特別支出', fixed: '固定支出' }
 const GROUP_COLOR = { variable: '#1c9dff', special: '#ff6b57', fixed: '#ffa726' }
@@ -10,8 +11,14 @@ const CAT_DETAIL_LIMIT = 30
 const MEMO_LIMIT = 5
 
 export default function SummaryPage() {
+  const char = useCharacter()
   const [month, setMonth] = useState(currentMonth())
   const [data, setData] = useState(null)
+  // 集計期間（1=今月 / 3 / 6 / 12ヶ月）
+  const [rangeMonths, setRangeMonths] = useState(1)
+  const [rangeData, setRangeData] = useState(null)
+  const [rangeTx, setRangeTx] = useState([])
+  const [trendData, setTrendData] = useState(null)
   const [error, setError] = useState('')
 
   // 未記入リマインド・異常アラート
@@ -41,6 +48,38 @@ export default function SummaryPage() {
     api(`/api/insights?month=${month}&year=${y}`).then(setInsights).catch(() => setInsights(null))
   }, [month])
 
+  useEffect(() => {
+    try {
+      const v = Number(localStorage.getItem('kakeibo-range'))
+      if ([1, 3, 6, 12].includes(v)) setRangeMonths(v)
+    } catch { /* ignore */ }
+  }, [])
+
+  const changeRange = (n) => {
+    setRangeMonths(n)
+    try { localStorage.setItem('kakeibo-range', String(n)) } catch { /* ignore */ }
+  }
+
+  useEffect(() => {
+    if (rangeMonths <= 1) {
+      setRangeData(null)
+      setRangeTx([])
+      return
+    }
+    api(`/api/summary-range?end=${month}&months=${rangeMonths}`).then(setRangeData).catch(() => setRangeData(null))
+    const months = []
+    for (let i = rangeMonths - 1; i >= 0; i--) months.push(shiftMonth(month, -i))
+    Promise.all(months.map((m) => api(`/api/transactions?month=${m}`).catch(() => [])))
+      .then((lists) => setRangeTx(lists.flat()))
+      .catch(() => setRangeTx([]))
+  }, [month, rangeMonths])
+
+  // カテゴリー推移（今月表示のときは直近6ヶ月を取得）
+  useEffect(() => {
+    if (!selectedCategory || rangeMonths > 1) return
+    api(`/api/summary-range?end=${month}&months=6`).then(setTrendData).catch(() => setTrendData(null))
+  }, [selectedCategory, month, rangeMonths])
+
   const loadMemos = () => api('/api/quick-memos').then(setMemos).catch(() => {})
 
   useEffect(() => {
@@ -50,8 +89,10 @@ export default function SummaryPage() {
     loadMemos()
   }, [])
 
+  const view = rangeMonths > 1 && rangeData ? rangeData : null
+  const viewTotal = view ? view.total : data?.total || 0
   const categories = data
-    ? Object.entries(data.byCategory).sort((a, b) => b[1] - a[1])
+    ? Object.entries(view ? view.byCategory : data.byCategory).sort((a, b) => b[1] - a[1])
     : []
   const maxAmount = categories.length ? categories[0][1] : 0
 
@@ -78,8 +119,24 @@ export default function SummaryPage() {
     : 0
 
   // カテゴリー詳細
-  const catTx = selectedCategory ? monthTx.filter((t) => t.category === selectedCategory) : []
-  const catPrevTotal = selectedCategory && data ? data.previousMonth.byCategory[selectedCategory] || 0 : 0
+  const catTx = selectedCategory
+    ? (view ? rangeTx : monthTx).filter((t) => t.category === selectedCategory).sort((a, b) => (a.date < b.date ? 1 : -1))
+    : []
+  const catPrevTotal = selectedCategory
+    ? view
+      ? view.prevByCategory[selectedCategory] || 0
+      : data
+        ? data.previousMonth.byCategory[selectedCategory] || 0
+        : 0
+    : 0
+  // カテゴリー推移グラフ（月別）
+  const trendMonths = selectedCategory
+    ? (view ? view.monthList : trendData?.monthList || []).map((m) => ({
+        month: m.month,
+        value: m.byCategory[selectedCategory] || 0,
+      }))
+    : []
+  const trendMax = Math.max(0, ...trendMonths.map((t) => t.value))
   const catTotal = catTx.reduce((s, t) => s + t.amount, 0)
   const visibleCatTx = showAllCatDetail ? catTx : catTx.slice(0, CAT_DETAIL_LIMIT)
 
@@ -137,7 +194,25 @@ export default function SummaryPage() {
         <button onClick={() => setMonth(shiftMonth(month, 1))} className={monthBtn}>翌月 →</button>
       </div>
 
+      <div className="flex gap-2 justify-center mb-4">
+        {[
+          { n: 1, label: '今月' },
+          { n: 3, label: '3ヶ月' },
+          { n: 6, label: '6ヶ月' },
+          { n: 12, label: '1年' },
+        ].map((o) => (
+          <button
+            key={o.n}
+            onClick={() => changeRange(o.n)}
+            className={`rounded-full px-4 py-1.5 text-sm font-bold ${rangeMonths === o.n ? 'bg-sleep-blue text-white shadow' : 'bg-white text-gray-500 border-2 border-sleep-cyan'}`}
+          >
+            {o.label}
+          </button>
+        ))}
+      </div>
+
       {error && <p className="text-red-500 mb-3">{error}</p>}
+      {rangeMonths > 1 && !rangeData && data && <p className="text-gray-400">期間集計を読み込み中…</p>}
       {!data && !error && <p className="text-gray-400">読み込み中…</p>}
 
       {/* 未記入リマインド */}
@@ -164,27 +239,56 @@ export default function SummaryPage() {
         </Link>
       )}
 
-      {data && (
+      {data && (rangeMonths === 1 || rangeData) && (
         <div className="space-y-5">
           {/* 青グラデーションのヒーローカード + 日別バー */}
           <div className="rounded-4xl p-5 text-white shadow-lg bg-gradient-to-b from-sleep-sky via-sleep-blue to-sleep-deep overflow-hidden">
             <div className="flex items-center gap-3 mb-2">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/mickey-accountant.png" alt="ミッキー" className="w-14 h-14 rounded-full border-[3px] border-yellow-200 object-cover bg-white shadow" />
+              <img src={char.src} alt={char.name} className="w-14 h-14 rounded-full border-[3px] border-yellow-200 object-cover bg-white shadow" />
               <div>
                 <div className="text-xs font-bold text-white/85">Kakeibo</div>
                 <div className="font-extrabold text-lg leading-tight">メインメニュー</div>
               </div>
             </div>
-            <div className="text-sm font-bold text-white/85">今月の支出合計</div>
-            <div className="text-4xl font-extrabold drop-shadow">{yen(data.total)}</div>
+            <div className="text-sm font-bold text-white/85">{view ? `${rangeMonths}ヶ月の支出合計` : '今月の支出合計'}</div>
+            <div className="text-4xl font-extrabold drop-shadow">{yen(view ? view.total : data.total)}</div>
             <div className="text-sm mt-1 font-bold">
-              先月比{' '}
-              <span className={data.totalDiff > 0 ? 'text-yellow-200' : 'text-green-200'}>
-                {data.totalDiff > 0 ? '+' : ''}{yen(data.totalDiff)}
+              {view ? '前期間比' : '先月比'}{' '}
+              <span className={(view ? view.totalDiff : data.totalDiff) > 0 ? 'text-yellow-200' : 'text-green-200'}>
+                {(view ? view.totalDiff : data.totalDiff) > 0 ? '+' : ''}{yen(view ? view.totalDiff : data.totalDiff)}
               </span>
-              <span className="text-white/80">（{data.count}件）</span>
+              <span className="text-white/80">（{view ? view.count : data.count}件）</span>
             </div>
+            {view ? (
+              <div className="mt-4">
+                <div className="flex items-end gap-2 h-24">
+                  {view.monthList.map((m) => {
+                    const mv = Math.max(0, ...view.monthList.map((x) => x.total))
+                    return (
+                      <div key={m.month} className="flex-1 flex flex-col items-center justify-end h-full">
+                        <div className="text-[9px] font-bold text-white/90 mb-0.5">{m.total ? `¥${Math.round(m.total / 1000)}k` : ''}</div>
+                        <div
+                          className="w-full rounded-t"
+                          title={`${m.month} ${yen(m.total)}`}
+                          style={{
+                            height: `${m.total > 0 ? Math.max(8, (m.total / (mv || 1)) * 100) : 2}%`,
+                            background: m.month === month ? '#6ee7ff' : 'rgba(255,255,255,0.55)',
+                          }}
+                        />
+                      </div>
+                    )
+                  })}
+                </div>
+                <div className="flex gap-2 text-[10px] text-white/85 mt-1 font-bold">
+                  {view.monthList.map((m) => (
+                    <span key={m.month} className="flex-1 text-center">{Number(m.month.split('-')[1])}月</span>
+                  ))}
+                </div>
+                <div className="text-[10px] text-white/70 mt-0.5">単位：円（バー上の数字は千円単位）</div>
+              </div>
+            ) : (
+            <>
             <div className="flex items-end gap-[3px] h-24 mt-4">
               {daily.map(({ day, value }) => (
                 <div key={day} className="flex-1 flex flex-col items-center justify-end h-full">
@@ -202,6 +306,8 @@ export default function SummaryPage() {
             <div className="flex justify-between text-[10px] text-white/85 mt-1 font-bold">
               <span>1日</span><span>{daysInMonth}日</span>
             </div>
+            </>
+            )}
           </div>
 
           {/* 区分カード（カラフルな縁取り） */}
@@ -213,7 +319,7 @@ export default function SummaryPage() {
                 style={{ borderColor: GROUP_COLOR[g] }}
               >
                 <div className="text-xs font-bold" style={{ color: GROUP_COLOR[g] }}>{GROUP_LABEL[g]}</div>
-                <div className="font-extrabold">{yen(data.byGroup[g])}</div>
+                <div className="font-extrabold">{yen((view ? view.byGroup : data.byGroup)[g])}</div>
               </div>
             ))}
           </div>
@@ -245,7 +351,7 @@ export default function SummaryPage() {
                       <span>
                         {yen(amount)}
                         <span className="text-gray-400 ml-2 font-medium">
-                          {data.total ? Math.round((amount / data.total) * 100) : 0}%
+                          {viewTotal ? Math.round((amount / viewTotal) * 100) : 0}%
                         </span>
                       </span>
                     </div>
@@ -268,11 +374,37 @@ export default function SummaryPage() {
                   <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm font-bold mb-2">
                     <span>{selectedCategory} の明細</span>
                     <span>合計 {yen(catTotal)}</span>
-                    <span className="text-gray-400">{catTx.length}件 / 全体の{data.total ? Math.round((catTotal / data.total) * 100) : 0}%</span>
+                    <span className="text-gray-400">{catTx.length}件 / 全体の{viewTotal ? Math.round((catTotal / viewTotal) * 100) : 0}%</span>
                     <span className={catTotal - catPrevTotal > 0 ? 'text-orange-500' : 'text-green-600'}>
-                      先月比 {catTotal - catPrevTotal > 0 ? '+' : ''}{yen(catTotal - catPrevTotal)}
+                      {view ? '前期間比' : '先月比'} {catTotal - catPrevTotal > 0 ? '+' : ''}{yen(catTotal - catPrevTotal)}
                     </span>
                   </div>
+                  {trendMonths.length > 0 && (
+                    <div className="mb-3 bg-sky-50 rounded-2xl p-3">
+                      <div className="text-xs font-bold text-gray-500 mb-1">{selectedCategory} の月別推移（単位：円）</div>
+                      <div className="flex items-end gap-1.5 h-20">
+                        {trendMonths.map((t) => (
+                          <div key={t.month} className="flex-1 flex flex-col items-center justify-end h-full">
+                            <div className="text-[9px] font-bold text-gray-500">{t.value ? `¥${Math.round(t.value / 1000)}k` : ''}</div>
+                            <div
+                              className="w-full rounded-t"
+                              title={`${t.month} ${yen(t.value)}`}
+                              style={{
+                                height: `${t.value > 0 ? Math.max(6, (t.value / (trendMax || 1)) * 100) : 2}%`,
+                                background: categoryColor(selectedCategory),
+                                opacity: t.month === month ? 1 : 0.55,
+                              }}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                      <div className="flex gap-1.5 text-[10px] text-gray-400 mt-1 font-bold">
+                        {trendMonths.map((t) => (
+                          <span key={t.month} className="flex-1 text-center">{Number(t.month.split('-')[1])}月</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                   <div className="divide-y">
                     {visibleCatTx.map((t) => (
                       <div key={t.id} className="py-1.5 flex justify-between text-sm">
@@ -302,19 +434,19 @@ export default function SummaryPage() {
           <div>
             <span className="ribbon">クイックメモ</span>
             <div className="bg-white rounded-3xl p-4 shadow-sm mt-3">
-              <form onSubmit={addMemo} className="flex gap-2">
+              <form onSubmit={addMemo} className="grid grid-cols-[1fr_1fr_auto] gap-2">
                 <input
                   type="number"
                   value={memoAmount}
                   onChange={(e) => setMemoAmount(e.target.value)}
                   placeholder="金額だけ先に入れる"
-                  className={`${inputCls} flex-1`}
+                  className={`${inputCls} w-full min-w-0`}
                 />
                 <input
                   value={memoText}
                   onChange={(e) => setMemoText(e.target.value)}
                   placeholder="メモ（任意）"
-                  className={`${inputCls} flex-1`}
+                  className={`${inputCls} w-full min-w-0`}
                 />
                 <button className="bg-sleep-greendeep text-white rounded-full px-4 font-bold shrink-0">追加</button>
               </form>

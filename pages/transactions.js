@@ -242,7 +242,7 @@ export default function TransactionsPage() {
   const templates = helpers.templates
   const visibleTemplates = showAllTemplates ? templates : templates.slice(0, TEMPLATE_LIMIT)
 
-  const inputCls = 'w-full border rounded-xl px-3 py-2 bg-white'
+  const inputCls = 'w-full min-w-0 border rounded-xl px-3 py-2 bg-white'
 
   return (
     <Layout title="明細">

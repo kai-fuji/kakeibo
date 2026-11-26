@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Layout, { api, yen, currentMonth, shiftMonth, categoryColor } from '../components/Layout'
 import EmptyState from '../components/EmptyState'
+import { useCharacter } from '../lib/characters'
 
 function monthlyComment(report) {
   if (!report || report.txCount === 0) return '今月はまだ記録がありません。候補タブの未記入もチェックしてみてください。'
@@ -17,6 +18,7 @@ function monthlyComment(report) {
 }
 
 export default function InsightsPage() {
+  const char = useCharacter()
   const [month, setMonth] = useState(currentMonth())
   const [data, setData] = useState(null)
   const [error, setError] = useState('')
@@ -244,7 +246,7 @@ export default function InsightsPage() {
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/mickey-accountant.png" alt="ミッキー" className="w-12 h-12 rounded-full border-[3px] border-yellow-200 object-cover bg-white shadow-sm" />
+                  <img src={char.src} alt={char.name} className="w-12 h-12 rounded-full border-[3px] border-yellow-200 object-cover bg-white shadow-sm" />
                   <p className="text-sm font-bold flex-1">{monthlyComment(report)}</p>
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-sm">

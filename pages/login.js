@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { useRouter } from 'next/router'
+import { useCharacter } from '../lib/characters'
 
 export default function Login() {
+  const char = useCharacter()
   const router = useRouter()
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -22,7 +24,7 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center px-4">
       <form onSubmit={submit} className="bg-white rounded-3xl shadow p-6 w-full max-w-sm space-y-4">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/mickey-accountant.png" alt="ミッキー" className="w-24 h-24 rounded-full mx-auto object-cover border-4 border-sleep-cyan" />
+        <img src={char.src} alt={char.name} className="w-24 h-24 rounded-full mx-auto object-cover border-4 border-sleep-cyan" />
         <h1 className="font-extrabold text-xl text-center">家計簿ログイン</h1>
         <input
           type="password"

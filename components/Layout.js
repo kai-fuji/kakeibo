@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
+import { useCharacter } from '../lib/characters'
 
 const NAV = [
   { href: '/', label: '集計', color: '#1c9dff' },
@@ -64,6 +65,7 @@ export async function api(path, options) {
 }
 
 export default function Layout({ children, title }) {
+  const char = useCharacter()
   const router = useRouter()
   const [pendingCount, setPendingCount] = useState(0)
 
@@ -81,7 +83,7 @@ export default function Layout({ children, title }) {
         <div className="max-w-3xl mx-auto px-4 py-2.5 flex items-center justify-between">
           <h1 className="font-extrabold text-lg tracking-wide flex items-center gap-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/mickey-accountant.png" alt="ミッキー" className="w-10 h-10 rounded-full border-2 border-white object-cover bg-white" />
+            <img src={char.src} alt={char.name} className="w-10 h-10 rounded-full border-2 border-white object-cover bg-white" />
             家計簿
           </h1>
           {title && <span className="text-sm text-white/85 font-bold">{title}</span>}
