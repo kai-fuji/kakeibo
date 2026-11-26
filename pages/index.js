@@ -1,5 +1,5 @@
 // pages/index.js - 月次集計（ホーム）ポケモンスリープ風デザイン
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import Layout, { api, yen, currentMonth, shiftMonth, categoryColor } from '../components/Layout'
 import EmptyState from '../components/EmptyState'
@@ -9,6 +9,21 @@ const GROUP_LABEL = { variable: '変動支出', special: '特別支出', fixed: 
 const GROUP_COLOR = { variable: '#1c9dff', special: '#ff6b57', fixed: '#ffa726' }
 const CAT_DETAIL_LIMIT = 30
 const MEMO_LIMIT = 5
+
+// グラフ用：指で横スクロールできる帯（最初は右端＝最新を表示、スクロールバーは出さない）
+function HScroll({ children, deps = [] }) {
+  const ref = useRef(null)
+  useEffect(() => {
+    const el = ref.current
+    if (el) el.scrollLeft = el.scrollWidth
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, deps)
+  return (
+    <div ref={ref} className="overflow-x-auto no-scrollbar">
+      {children}
+    </div>
+  )
+}
 
 export default function SummaryPage() {
   const char = useCharacter()
@@ -74,10 +89,10 @@ export default function SummaryPage() {
       .catch(() => setRangeTx([]))
   }, [month, rangeMonths])
 
-  // カテゴリー推移（今月表示のときは直近6ヶ月を取得）
+  // カテゴリー推移（今月表示のときは直近12ヶ月を取得し、グラフを横スクロールで遡れるようにする）
   useEffect(() => {
     if (!selectedCategory || rangeMonths > 1) return
-    api(`/api/summary-range?end=${month}&months=6`).then(setTrendData).catch(() => setTrendData(null))
+    api(`/api/summary-range?end=${month}&months=12`).then(setTrendData).catch(() => setTrendData(null))
   }, [selectedCategory, month, rangeMonths])
 
   const loadMemos = () => api('/api/quick-memos').then(setMemos).catch(() => {})
@@ -262,29 +277,29 @@ export default function SummaryPage() {
             </div>
             {view ? (
               <div className="mt-4">
-                <div className="flex items-end gap-2 h-24">
-                  {view.monthList.map((m) => {
-                    const mv = Math.max(0, ...view.monthList.map((x) => x.total))
-                    return (
-                      <div key={m.month} className="flex-1 flex flex-col items-center justify-end h-full">
-                        <div className="text-[9px] font-bold text-white/90 mb-0.5">{m.total ? `¥${Math.round(m.total / 1000)}k` : ''}</div>
-                        <div
-                          className="w-full rounded-t"
-                          title={`${m.month} ${yen(m.total)}`}
-                          style={{
-                            height: `${m.total > 0 ? Math.max(8, (m.total / (mv || 1)) * 100) : 2}%`,
-                            background: m.month === month ? '#6ee7ff' : 'rgba(255,255,255,0.55)',
-                          }}
-                        />
-                      </div>
-                    )
-                  })}
-                </div>
-                <div className="flex gap-2 text-[10px] text-white/85 mt-1 font-bold">
-                  {view.monthList.map((m) => (
-                    <span key={m.month} className="flex-1 text-center">{Number(m.month.split('-')[1])}月</span>
-                  ))}
-                </div>
+                <HScroll deps={[view.monthList.length, month]}>
+                  <div className="flex gap-2">
+                    {view.monthList.map((m) => {
+                      const mv = Math.max(0, ...view.monthList.map((x) => x.total))
+                      return (
+                        <div key={m.month} className="flex-1 min-w-[40px] flex flex-col items-center">
+                          <div className="text-[9px] font-bold text-white/90 h-3 mb-0.5">{m.total ? `¥${Math.round(m.total / 1000)}k` : ''}</div>
+                          <div className="h-24 w-full flex items-end">
+                            <div
+                              className="w-full rounded-t"
+                              title={`${m.month} ${yen(m.total)}`}
+                              style={{
+                                height: `${m.total > 0 ? Math.max(8, (m.total / (mv || 1)) * 100) : 2}%`,
+                                background: m.month === month ? '#6ee7ff' : 'rgba(255,255,255,0.55)',
+                              }}
+                            />
+                          </div>
+                          <div className="text-[10px] text-white/85 mt-1 font-bold">{Number(m.month.split('-')[1])}月</div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </HScroll>
                 <div className="text-[10px] text-white/70 mt-0.5">単位：円（バー上の数字は千円単位）</div>
               </div>
             ) : (
@@ -381,28 +396,28 @@ export default function SummaryPage() {
                   </div>
                   {trendMonths.length > 0 && (
                     <div className="mb-3 bg-sky-50 rounded-2xl p-3">
-                      <div className="text-xs font-bold text-gray-500 mb-1">{selectedCategory} の月別推移（単位：円）</div>
-                      <div className="flex items-end gap-1.5 h-20">
-                        {trendMonths.map((t) => (
-                          <div key={t.month} className="flex-1 flex flex-col items-center justify-end h-full">
-                            <div className="text-[9px] font-bold text-gray-500">{t.value ? `¥${Math.round(t.value / 1000)}k` : ''}</div>
-                            <div
-                              className="w-full rounded-t"
-                              title={`${t.month} ${yen(t.value)}`}
-                              style={{
-                                height: `${t.value > 0 ? Math.max(6, (t.value / (trendMax || 1)) * 100) : 2}%`,
-                                background: categoryColor(selectedCategory),
-                                opacity: t.month === month ? 1 : 0.55,
-                              }}
-                            />
-                          </div>
-                        ))}
-                      </div>
-                      <div className="flex gap-1.5 text-[10px] text-gray-400 mt-1 font-bold">
-                        {trendMonths.map((t) => (
-                          <span key={t.month} className="flex-1 text-center">{Number(t.month.split('-')[1])}月</span>
-                        ))}
-                      </div>
+                      <div className="text-xs font-bold text-gray-500 mb-1">{selectedCategory} の月別推移（単位：円）・横にスクロールできます</div>
+                      <HScroll deps={[trendMonths.length, selectedCategory]}>
+                        <div className="flex gap-1.5">
+                          {trendMonths.map((t) => (
+                            <div key={t.month} className="flex-1 min-w-[40px] flex flex-col items-center">
+                              <div className="text-[9px] font-bold text-gray-500 h-3">{t.value ? `¥${Math.round(t.value / 1000)}k` : ''}</div>
+                              <div className="h-20 w-full flex items-end">
+                                <div
+                                  className="w-full rounded-t"
+                                  title={`${t.month} ${yen(t.value)}`}
+                                  style={{
+                                    height: `${t.value > 0 ? Math.max(6, (t.value / (trendMax || 1)) * 100) : 2}%`,
+                                    background: categoryColor(selectedCategory),
+                                    opacity: t.month === month ? 1 : 0.55,
+                                  }}
+                                />
+                              </div>
+                              <div className="text-[10px] text-gray-400 mt-1 font-bold">{Number(t.month.split('-')[1])}月</div>
+                            </div>
+                          ))}
+                        </div>
+                      </HScroll>
                     </div>
                   )}
                   <div className="divide-y">

@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 横スクロール用（スクロールバーを隠す） */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
 body {
   background-color: #eef7ff;
   color: #243b53;
