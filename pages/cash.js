@@ -8,12 +8,17 @@ const CASH_LIMIT = 30
 export default function CashPage() {
   const [month, setMonth] = useState(currentMonth())
   const [data, setData] = useState(null)
+  const [allData, setAllData] = useState(null)
   const [showAll, setShowAll] = useState(false)
 
   useEffect(() => {
     api(`/api/cash?month=${month}`).then(setData).catch(() => setData(null))
     setShowAll(false)
   }, [month])
+
+  useEffect(() => {
+    api('/api/cash?scope=all').then(setAllData).catch(() => setAllData(null))
+  }, [])
 
   return (
     <Layout title="現金">
@@ -22,6 +27,22 @@ export default function CashPage() {
         <span className="font-bold">{month.replace('-', '年')}月</span>
         <button onClick={() => setMonth(shiftMonth(month, 1))} className="px-3 py-2 bg-white rounded-xl border">翌月 →</button>
       </div>
+
+      {allData && (
+        <div className="bg-gradient-to-r from-sleep-blue to-sleep-sky text-white rounded-2xl p-5 shadow-sm mb-4">
+          <div className="text-sm font-bold text-white/85">現金の総合計（全期間・精算用）</div>
+          <div className="text-3xl font-extrabold mt-0.5">{yen(allData.total)}</div>
+          <div className="text-xs text-white/80 mt-0.5">{allData.count}件</div>
+          <div className="mt-3 space-y-1">
+            {Object.entries(allData.byPayer).sort((a, b) => b[1] - a[1]).map(([payer, amount]) => (
+              <div key={payer} className="flex justify-between text-sm font-bold">
+                <span>{payer}</span>
+                <span>{yen(amount)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {data && (
         <div className="space-y-4">

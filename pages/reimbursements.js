@@ -212,7 +212,7 @@ export default function ReimbursementsPage() {
                       <span className={`font-medium shrink-0 ${isOffset ? 'text-gray-400' : ''}`}>{yen(r.amount)}</span>
                       <span className="text-gray-300 shrink-0 w-3 text-center">{open ? '⌄' : '›'}</span>
                     </button>
-                    {r.settled && <div className="text-[10px] text-green-600 pl-[4.2rem] -mt-0.5">精算済み</div>}
+                    {r.settled ? <div className="text-[10px] text-green-600 pl-[4.2rem] -mt-0.5">精算済み</div> : null}
                     {open && (
                       <div className="bg-sky-50 rounded-xl px-3 py-2.5 mb-1.5 text-sm space-y-1">
                         <div>

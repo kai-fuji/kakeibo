@@ -6,6 +6,21 @@ export default async function handler(req, res) {
   if (!requireAuth(req, res)) return
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' })
   try {
+    // scope=all: 精算用に全期間の総合計＋支払者別合計だけを返す
+    if (req.query.scope === 'all') {
+      const allRows = await listTransactions({ paymentMethod: 'cash' })
+      const allByPayer = {}
+      allRows.forEach((r) => {
+        const payer = r.payer || '未設定'
+        allByPayer[payer] = (allByPayer[payer] || 0) + r.amount
+      })
+      return res.status(200).json({
+        scope: 'all',
+        total: allRows.reduce((s, r) => s + r.amount, 0),
+        byPayer: allByPayer,
+        count: allRows.length,
+      })
+    }
     const month = req.query.month || new Date().toISOString().slice(0, 7)
     const rows = await listTransactions({ month, paymentMethod: 'cash' })
     const byPayer = {}

@@ -278,7 +278,7 @@ export default function SummaryPage() {
             {view ? (
               <div className="mt-4">
                 <HScroll deps={[view.monthList.length, month]}>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 w-max min-w-full">
                     {view.monthList.map((m) => {
                       const mv = Math.max(0, ...view.monthList.map((x) => x.total))
                       return (
@@ -398,7 +398,7 @@ export default function SummaryPage() {
                     <div className="mb-3 bg-sky-50 rounded-2xl p-3">
                       <div className="text-xs font-bold text-gray-500 mb-1">{selectedCategory} の月別推移（単位：円）・横にスクロールできます</div>
                       <HScroll deps={[trendMonths.length, selectedCategory]}>
-                        <div className="flex gap-1.5">
+                        <div className="flex gap-1.5 w-max min-w-full">
                           {trendMonths.map((t) => (
                             <div key={t.month} className="flex-1 min-w-[40px] flex flex-col items-center">
                               <div className="text-[9px] font-bold text-gray-500 h-3">{t.value ? `¥${Math.round(t.value / 1000)}k` : ''}</div>
