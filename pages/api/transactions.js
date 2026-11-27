@@ -1,6 +1,6 @@
 // pages/api/transactions.js - 支出明細 CRUD（品目明細つき）
 // 外部AI（Muse）からの登録もこのAPIを使う: Authorization: Bearer <API_TOKEN>
-import { getDb, listTransactions, getTransactionItems, createTransaction, updateTransaction, deleteTransaction } from '../../lib/db'
+import { getDb, listTransactions, getTransactionItems, createTransaction, updateTransaction, deleteTransaction, setTransactionSettled } from '../../lib/db'
 import { requireAuth } from '../../lib/auth'
 
 function validate(body) {
@@ -36,6 +36,11 @@ export default async function handler(req, res) {
     if (req.method === 'PUT') {
       const { id, ...rest } = req.body || {}
       if (!id) return res.status(400).json({ error: 'id が必要です' })
+      // 精算済みフラグだけの部分更新（現金の年次精算用）
+      if (rest.settled !== undefined && rest.date === undefined) {
+        await setTransactionSettled(id, !!rest.settled)
+        return res.status(200).json({ ok: true })
+      }
       const err = validate(rest)
       if (err) return res.status(400).json({ error: err })
       await updateTransaction(id, { ...rest, amount: Math.round(Number(rest.amount)) })

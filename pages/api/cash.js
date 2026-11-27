@@ -6,6 +6,25 @@ export default async function handler(req, res) {
   if (!requireAuth(req, res)) return
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' })
   try {
+    // scope=pool: 現金は月別ではなく全期間のプールとして扱う（年1回精算して空になる）
+    // 未精算分の合計・支払者別合計と、全レコード（精算済み含む）を返す
+    if (req.query.scope === 'pool') {
+      const allRows = await listTransactions({ paymentMethod: 'cash' })
+      const unsettled = allRows.filter((r) => !r.settled)
+      const byPayer = {}
+      unsettled.forEach((r) => {
+        const payer = r.payer || '未設定'
+        byPayer[payer] = (byPayer[payer] || 0) + r.amount
+      })
+      return res.status(200).json({
+        scope: 'pool',
+        total: unsettled.reduce((s, r) => s + r.amount, 0),
+        byPayer,
+        count: unsettled.length,
+        settledCount: allRows.length - unsettled.length,
+        transactions: allRows,
+      })
+    }
     // scope=all: 精算用に全期間の総合計＋支払者別合計だけを返す
     if (req.query.scope === 'all') {
       const allRows = await listTransactions({ paymentMethod: 'cash' })
