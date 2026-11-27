@@ -11,6 +11,7 @@ const RULE_LIMIT = 15
 export default function SettingsPage() {
   const char = useCharacter()
   const [charSort, setCharSort] = useState('recommended')
+  const [charOpen, setCharOpen] = useState(false)
   const [categories, setCategories] = useState([])
   const [members, setMembers] = useState([])
   const [newCategory, setNewCategory] = useState('')
@@ -99,31 +100,47 @@ export default function SettingsPage() {
           </div>
         </div>
         <div className="bg-white rounded-2xl p-4 shadow-sm">
-          <h2 className="font-bold mb-1">キャラクター</h2>
-          <p className="text-sm text-gray-400 mb-3">アプリの中に登場するキャラクターを選べます。今は「{char.name}」です。</p>
-          <div className="flex gap-2 mb-3">
-            {[
-              { v: 'recommended', label: 'おすすめ順' },
-              { v: 'name', label: '名前順' },
-            ].map((o) => (
-              <button
-                key={o.v}
-                onClick={() => changeCharSort(o.v)}
-                className={`rounded-full px-4 py-1.5 text-sm font-bold ${charSort === o.v ? 'bg-sleep-blue text-white' : 'bg-gray-100 text-gray-500'}`}
-              >
-                {o.label}
-              </button>
-            ))}
-          </div>
-          <div className="grid grid-cols-4 gap-3">
-            {charList.map((c) => (
-              <button key={c.id} onClick={() => setCharacter(c.id, charImgSrc(c))} className="flex flex-col items-center gap-1" aria-pressed={c.id === char.id}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={charImgSrc(c)} alt={c.name} className={`w-16 h-16 rounded-full object-cover ${c.id === char.id ? 'ring-4 ring-yellow-300' : 'ring-1 ring-gray-200'}`} />
-                <span className={`w-full truncate text-center text-[10px] ${c.id === char.id ? 'font-bold text-sleep-blue' : 'text-gray-400'}`}>{c.name}</span>
-              </button>
-            ))}
-          </div>
+          <button onClick={() => setCharOpen(!charOpen)} aria-expanded={charOpen} className="w-full flex items-center gap-3 text-left">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={char.src} alt={char.name} className="w-10 h-10 rounded-full object-cover ring-1 ring-gray-200" />
+            <span className="flex-1 min-w-0">
+              <span className="block font-bold">キャラクター</span>
+              <span className="block text-sm text-gray-400 truncate">今は「{char.name}」です</span>
+            </span>
+            <span className="text-gray-300 text-lg">{charOpen ? '⌄' : '›'}</span>
+          </button>
+          {charOpen && (
+            <div className="mt-3">
+              <div className="flex gap-2 mb-3">
+                {[
+                  { v: 'recommended', label: 'おすすめ順' },
+                  { v: 'name', label: '名前順' },
+                ].map((o) => (
+                  <button
+                    key={o.v}
+                    onClick={() => changeCharSort(o.v)}
+                    className={`rounded-full px-4 py-1.5 text-sm font-bold ${charSort === o.v ? 'bg-sleep-blue text-white' : 'bg-gray-100 text-gray-500'}`}
+                  >
+                    {o.label}
+                  </button>
+                ))}
+              </div>
+              <div className="grid grid-cols-4 gap-3">
+                {charList.map((c) => (
+                  <button
+                    key={c.id}
+                    onClick={() => { setCharacter(c.id, charImgSrc(c)); setCharOpen(false) }}
+                    className="flex flex-col items-center gap-1"
+                    aria-pressed={c.id === char.id}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={charImgSrc(c)} alt={c.name} className={`w-16 h-16 rounded-full object-cover ${c.id === char.id ? 'ring-4 ring-yellow-300' : 'ring-1 ring-gray-200'}`} />
+                    <span className={`w-full truncate text-center text-[10px] ${c.id === char.id ? 'font-bold text-sleep-blue' : 'text-gray-400'}`}>{c.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="bg-white rounded-2xl p-4 shadow-sm">
