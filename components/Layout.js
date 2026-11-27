@@ -8,14 +8,14 @@ const NAV = [
   { href: '/transactions', label: '明細', icon: 'list' },
   { href: '/candidates', label: '候補', icon: 'inbox' },
   { href: '/cash', label: '現金', icon: 'wallet' },
-  { href: '/reimbursements', label: '建て替え', icon: 'swap' },
-  { href: '/prices', label: '価格', icon: 'tag' },
-  { href: '/insights', label: '気づく', icon: 'bulb' },
-  { href: '/settings', label: '設定', icon: 'gear' },
+  { href: '/more', label: 'その他', icon: 'more' },
 ]
 
+// 「その他」にまとめたページ（その他タブのハイライト判定にも使う）
+export const MORE_PATHS = ['/more', '/reimbursements', '/prices', '/insights', '/settings']
+
 // ボトムタブバー用の線画アイコン（stroke=currentColor）
-function NavIcon({ name }) {
+export function NavIcon({ name }) {
   const common = {
     width: 24,
     height: 24,
@@ -78,6 +78,15 @@ function NavIcon({ name }) {
         <svg {...common}>
           <path d="M9.5 18.5h5M10.3 21h3.4" />
           <path d="M12 3.5a5.8 5.8 0 0 1 3.4 10.5c-.7.5-1 1-1.1 2h-4.6c-.1-1-.4-1.5-1.1-2A5.8 5.8 0 0 1 12 3.5z" />
+        </svg>
+      )
+    case 'more':
+      return (
+        <svg {...common}>
+          <rect x="4" y="4" width="7" height="7" rx="2" />
+          <rect x="13.5" y="4" width="7" height="7" rx="2" />
+          <rect x="4" y="13.5" width="7" height="7" rx="2" />
+          <rect x="13.5" y="13.5" width="7" height="7" rx="2" />
         </svg>
       )
     case 'gear':
@@ -172,9 +181,9 @@ export default function Layout({ children, title }) {
         className="fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur border-t border-gray-200 z-10"
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
-        <div className="max-w-3xl mx-auto grid grid-cols-8">
+        <div className="max-w-3xl mx-auto grid grid-cols-5">
           {NAV.map((item) => {
-            const active = router.pathname === item.href
+            const active = item.href === '/more' ? MORE_PATHS.includes(router.pathname) : router.pathname === item.href
             const showBadge = item.href === '/candidates' && pendingCount > 0
             return (
               <Link
