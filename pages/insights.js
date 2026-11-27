@@ -67,7 +67,7 @@ export default function InsightsPage() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="店名・品目・メモで探す（例: タイヤ）"
-                className="flex-1 border rounded-xl px-3 py-2 bg-white"
+                className="flex-1 min-w-0 border rounded-xl px-3 py-2 bg-white"
               />
               <button className="bg-sleep-blue text-white rounded-full px-5 font-bold" disabled={searching}>
                 検索
@@ -81,7 +81,7 @@ export default function InsightsPage() {
                   <div className="divide-y">
                     {searchResult.transactions.map((t) => (
                       <div key={t.id} className="py-1.5 flex justify-between text-sm">
-                        <span>
+                        <span className="min-w-0">
                           <span className="text-gray-500 mr-2">{t.date}</span>
                           <span
                             className="inline-block text-xs rounded-full px-2 py-0.5 mr-2 font-bold text-white"
@@ -105,7 +105,7 @@ export default function InsightsPage() {
                     <div className="divide-y">
                       {searchResult.candidates.map((c) => (
                         <div key={c.id} className="py-1.5 flex justify-between text-sm">
-                          <span>
+                          <span className="min-w-0">
                             <span className="text-gray-500 mr-2">{c.date}</span>
                             {c.store || c.note || ''}
                             <span className="text-xs text-gray-400 ml-1">
@@ -124,7 +124,7 @@ export default function InsightsPage() {
                     <div className="divide-y">
                       {searchResult.reimbursements.map((r) => (
                         <div key={r.id} className="py-1.5 flex justify-between text-sm">
-                          <span>
+                          <span className="min-w-0">
                             <span className="text-gray-500 mr-2">{r.date}</span>
                             {r.member} {r.detail || ''}
                           </span>
@@ -174,7 +174,7 @@ export default function InsightsPage() {
             <div className="divide-y">
               {data?.subscriptions.map((s) => (
                 <div key={s.storeKey} className="py-2 flex justify-between gap-2">
-                  <div>
+                  <div className="flex-1 min-w-0">
                     <span className="font-bold">{s.store}</span>
                     <span
                       className="inline-block text-xs rounded-full px-2 py-0.5 ml-2 font-bold text-white"
@@ -227,7 +227,7 @@ export default function InsightsPage() {
                   <div className="mt-3 divide-y">
                     {medical.recent.map((r) => (
                       <div key={r.id} className="py-1.5 flex justify-between text-sm">
-                        <span><span className="text-gray-500 mr-2">{r.date}</span>{r.memo || ''}</span>
+                        <span className="min-w-0"><span className="text-gray-500 mr-2">{r.date}</span>{r.memo || ''}</span>
                         <span className="font-medium">{yen(r.amount)}</span>
                       </div>
                     ))}
@@ -247,28 +247,28 @@ export default function InsightsPage() {
                 <div className="flex items-center gap-3">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={char.src} alt={char.name} className="w-12 h-12 rounded-full border-[3px] border-yellow-200 object-cover bg-white shadow-sm" />
-                  <p className="text-sm font-bold flex-1">{monthlyComment(report)}</p>
+                  <p className="text-sm font-bold flex-1 min-w-0">{monthlyComment(report)}</p>
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div className="bg-sky-50 rounded-2xl p-3">
+                  <div className="bg-sky-50 rounded-2xl p-3 min-w-0">
                     <div className="text-xs text-gray-400">今月の合計</div>
                     <div className="font-extrabold text-lg">{yen(report.total)}</div>
                     <div className="text-xs">
                       先月 {yen(report.prevTotal)}（{report.diff > 0 ? '+' : ''}{yen(report.diff)} / {report.diffPercent}%）
                     </div>
                   </div>
-                  <div className="bg-sky-50 rounded-2xl p-3">
+                  <div className="bg-sky-50 rounded-2xl p-3 min-w-0">
                     <div className="text-xs text-gray-400">内訳</div>
                     <div className="font-bold">カード {yen(report.cardTotal)}</div>
                     <div className="font-bold">現金 {yen(report.cashTotal)}</div>
                     <div className="text-xs">{report.txCount}件 / 記録日 {report.activeDays}日 / 1日平均 {yen(report.avgPerDay)}</div>
                   </div>
-                  <div className="bg-sky-50 rounded-2xl p-3">
+                  <div className="bg-sky-50 rounded-2xl p-3 min-w-0">
                     <div className="text-xs text-gray-400">一番大きかった支出</div>
                     <div className="font-extrabold">{report.largestTxAmount ? yen(report.largestTxAmount) : '-'}</div>
                     <div className="text-xs">{report.largestTxDate || ''} {report.largestTxCategory || ''} {report.largestTxMemo || ''}</div>
                   </div>
-                  <div className="bg-sky-50 rounded-2xl p-3">
+                  <div className="bg-sky-50 rounded-2xl p-3 min-w-0">
                     <div className="text-xs text-gray-400">先月から一番変わったカテゴリー</div>
                     <div className="text-sm font-bold">
                       増: {report.biggestIncreaseName || '-'}（{report.biggestIncreaseDiff > 0 ? '+' : ''}{yen(report.biggestIncreaseDiff)}）

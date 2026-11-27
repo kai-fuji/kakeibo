@@ -16,6 +16,8 @@ body {
   color: #243b53;
   font-family: 'M PLUS Rounded 1c', -apple-system, BlinkMacSystemFont, 'Hiragino Maru Gothic ProN',
     'Hiragino Sans', 'Noto Sans JP', sans-serif;
+  /* 万一はみ出す要素があっても画面全体が横にずれないようにする保険（stickyは壊さない clip を使う） */
+  overflow-x: clip;
 }
 
 input, select, textarea {

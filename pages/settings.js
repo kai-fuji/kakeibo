@@ -134,7 +134,7 @@ export default function SettingsPage() {
                     aria-pressed={c.id === char.id}
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={charImgSrc(c)} alt={c.name} className={`w-16 h-16 rounded-full object-cover ${c.id === char.id ? 'ring-4 ring-yellow-300' : 'ring-1 ring-gray-200'}`} />
+                    <img src={charImgSrc(c)} alt={c.name} className={`w-full aspect-square rounded-full object-cover ${c.id === char.id ? 'ring-4 ring-yellow-300' : 'ring-1 ring-gray-200'}`} />
                     <span className={`w-full truncate text-center text-[10px] ${c.id === char.id ? 'font-bold text-sleep-blue' : 'text-gray-400'}`}>{c.name}</span>
                   </button>
                 ))}
@@ -152,7 +152,7 @@ export default function SettingsPage() {
             {members.length === 0 && <span className="text-gray-400 text-sm">未登録です。まずメンバーを追加してください</span>}
           </div>
           <form onSubmit={addMember} className="flex gap-2">
-            <input value={newMember} onChange={(e) => setNewMember(e.target.value)} placeholder="名前" className={`${inputCls} flex-1`} />
+            <input value={newMember} onChange={(e) => setNewMember(e.target.value)} placeholder="名前" className={`${inputCls} flex-1 min-w-0`} />
             <button className="bg-sleep-blue text-white rounded-full px-5 font-bold">追加</button>
           </form>
         </div>
@@ -170,8 +170,8 @@ export default function SettingsPage() {
             </div>
           ))}
           <form onSubmit={addCategory} className="flex gap-2 mt-2">
-            <input value={newCategory} onChange={(e) => setNewCategory(e.target.value)} placeholder="新しいカテゴリー" className={`${inputCls} flex-1`} />
-            <select value={newGroup} onChange={(e) => setNewGroup(e.target.value)} className={inputCls}>
+            <input value={newCategory} onChange={(e) => setNewCategory(e.target.value)} placeholder="新しいカテゴリー" className={`${inputCls} flex-1 min-w-0`} />
+            <select value={newGroup} onChange={(e) => setNewGroup(e.target.value)} className={`${inputCls} min-w-0 shrink`}>
               {Object.entries(GROUP_LABEL).map(([v, l]) => (
                 <option key={v} value={v}>{l}</option>
               ))}
@@ -201,7 +201,7 @@ export default function SettingsPage() {
                 <select
                   value={r.category}
                   onChange={(e) => changeRuleCategory(r, e.target.value)}
-                  className="border rounded-xl px-2 py-1.5 bg-white text-sm"
+                  className="border rounded-xl px-2 py-1.5 bg-white text-sm min-w-0 shrink"
                 >
                   {categories.map((c) => (
                     <option key={c.id} value={c.name}>{c.name}</option>
